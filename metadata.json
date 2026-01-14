@@ -1,0 +1,7 @@
+{
+  "name": "WeekWise",
+  "description": "An elegant and modern week number calculator that helps you track time with precision based on your local time and custom target dates.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
