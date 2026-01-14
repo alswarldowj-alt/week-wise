@@ -5,15 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeekWise - 精准周数计算器</title>
+    <!-- 基础样式与字体 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Babel 运行时 -->
+    
+    <!-- 加载核心库 (UMD版本，最稳定) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background-color: #020617;
             color: #f8fafc;
             margin: 0;
@@ -21,7 +24,8 @@
         }
         .glass {
             background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .gradient-text {
@@ -30,20 +34,24 @@
             -webkit-text-fill-color: transparent;
         }
         .glow-blue {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.1);
         }
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
         }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
-    <script type="importmap">
+<script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
@@ -52,17 +60,162 @@
 </head>
 <body>
     <div id="root">
-        <div class="flex flex-col items-center justify-center min-h-screen space-y-4">
-            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-slate-400 font-medium animate-pulse">正在激活 WeekWise 系统...</p>
+        <!-- 初始加载状态 -->
+        <div class="flex flex-col items-center justify-center min-h-screen space-y-6">
+            <div class="relative">
+                <div class="w-16 h-16 border-4 border-blue-500/20 rounded-full"></div>
+                <div class="absolute top-0 w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div class="text-center">
+                <p class="text-xl font-bold gradient-text animate-pulse">正在初始化 WeekWise</p>
+                <p class="text-slate-500 text-sm mt-2">首次加载可能需要几秒钟...</p>
+            </div>
         </div>
     </div>
 
-    <!-- 
-      核心修复：不再使用 inline import，而是通过 src 加载 index.tsx。
-      Babel 会处理文件获取和转译，不受服务器 MIME 类型影响。
-    -->
-    <script src="index.tsx" type="text/babel" data-presets="react,typescript"></script>
+    <!-- 所有逻辑内联 -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 核心算法 ---
+        const getISOWeekNumber = (date) => {
+            const target = new Date(date.valueOf());
+            const dayNr = (date.getDay() + 6) % 7;
+            target.setDate(target.getDate() - dayNr + 3);
+            const firstThursday = target.valueOf();
+            target.setMonth(0, 1);
+            if (target.getDay() !== 4) {
+                target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+            }
+            return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+        };
+
+        const formatDate = (date) => new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+        const getDayName = (date) => new Intl.DateTimeFormat('zh-CN', { weekday: 'long' }).format(date);
+
+        // --- 子组件 ---
+        const WeekCard = ({ title, date, weekNumber, isCurrent, timezone }) => (
+            <div className={`glass rounded-3xl p-8 transition-all duration-500 hover:scale-[1.02] ${isCurrent ? 'ring-1 ring-blue-500/40 glow-blue' : ''}`}>
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">{title}</h3>
+                        <p className="text-2xl font-bold text-white leading-tight">{formatDate(date)}</p>
+                        <p className="text-blue-400 font-medium mt-1">{getDayName(date)}</p>
+                    </div>
+                    {isCurrent && (
+                        <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/30 rounded-full flex items-center space-x-2">
+                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                            <span className="text-[10px] font-bold text-blue-400 uppercase">实时</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="py-2">
+                    <div className="flex items-baseline">
+                        <span className="text-slate-500 font-medium mr-3">第</span>
+                        <span className="text-8xl font-black gradient-text tracking-tighter">
+                            {String(weekNumber).padStart(2, '0')}
+                        </span>
+                        <span className="text-slate-500 font-medium ml-3">周</span>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/5 flex items-center text-[10px] text-slate-500 font-medium uppercase tracking-widest">
+                    <svg className="w-3.5 h-3.5 mr-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {isCurrent && timezone ? `当前时区: ${timezone}` : 'ISO-8601 标准计算'}
+                </div>
+            </div>
+        );
+
+        // --- 主程序 ---
+        const App = () => {
+            const [now, setNow] = useState(new Date());
+            const [targetStr, setTargetStr] = useState(new Date().toISOString().split('T')[0]);
+            const [tz, setTz] = useState('');
+
+            useEffect(() => {
+                setTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
+                const timer = setInterval(() => setNow(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const targetDate = new Date(targetStr);
+            const isValid = !isNaN(targetDate.getTime());
+
+            return (
+                <div className="min-h-screen py-12 px-6">
+                    {/* 背景装饰 */}
+                    <div className="fixed inset-0 -z-10 overflow-hidden">
+                        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]"></div>
+                    </div>
+
+                    <div className="max-w-5xl mx-auto">
+                        <header className="text-center mb-16 space-y-4">
+                            <h1 className="text-5xl md:text-7xl font-black tracking-tighter italic">
+                                WEEK<span className="gradient-text">WISE</span>
+                            </h1>
+                            <p className="text-slate-400 font-medium tracking-widest text-sm uppercase">高效 · 精准 · 现代</p>
+                        </header>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                            {/* 控制面板 */}
+                            <div className="lg:col-span-5 space-y-8">
+                                <div className="glass rounded-3xl p-8 animate-float">
+                                    <h2 className="text-xs font-bold text-blue-400 uppercase tracking-[0.2em] mb-8">目标日期检索</h2>
+                                    <input 
+                                        type="date" 
+                                        value={targetStr}
+                                        onChange={(e) => setTargetStr(e.target.value)}
+                                        className="w-full bg-slate-950/50 border border-slate-800 text-white text-3xl font-bold rounded-2xl p-6 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    />
+                                    <div className="mt-6 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                                        <p className="text-slate-400 text-xs leading-relaxed">
+                                            正在通过 ISO-8601 国际标准处理您的请求。该标准规定每周一为起始日。
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="hidden lg:block glass rounded-3xl p-8 opacity-60">
+                                    <h4 className="text-white text-xs font-bold uppercase mb-4">关于本工具</h4>
+                                    <p className="text-slate-500 text-xs leading-loose">
+                                        WeekWise 专为需要精确周次同步的开发者、财务人员和物流专家设计。它消除了不同设备间的日期解析歧义。
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 结果展示 */}
+                            <div className="lg:col-span-7 grid grid-cols-1 gap-8">
+                                <WeekCard 
+                                    title="实时系统状态" 
+                                    date={now} 
+                                    weekNumber={getISOWeekNumber(now)} 
+                                    isCurrent={true} 
+                                    timezone={tz}
+                                />
+                                <WeekCard 
+                                    title="目标日期计算结果" 
+                                    date={isValid ? targetDate : now} 
+                                    weekNumber={isValid ? getISOWeekNumber(targetDate) : 0} 
+                                />
+                            </div>
+                        </div>
+
+                        <footer className="mt-24 text-center">
+                            <div className="h-px w-24 bg-gradient-to-r from-transparent via-slate-800 to-transparent mx-auto mb-8"></div>
+                            <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.4em]">WeekWise Precision Utility</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
+        // 挂载
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
