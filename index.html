@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeekWise - Professional Week Calculator</title>
+    <title>WeekWise - 精准周数计算器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +17,7 @@
             background-color: #0f172a;
             margin: 0;
             padding: 0;
+            color: #f8fafc;
         }
         .glass-card {
             background: rgba(30, 41, 59, 0.7);
@@ -28,8 +29,17 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .glow-blue {
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        #fallback-error {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(30, 41, 59, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.5);
         }
     </style>
     <script type="importmap">
@@ -46,9 +56,55 @@
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
-    <div id="root"></div>
-    <!-- 使用 Babel 实时处理 TSX，注意 type="text/babel" 和 data-type="module" -->
-    <script type="text/babel" data-presets="react,typescript" data-type="module" src="./index.tsx"></script>
+    <div id="root">
+        <!-- 初始加载状态 -->
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-4 text-slate-400">正在启动 WeekWise...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="fallback-error">
+        <h2 class="text-red-400 font-bold mb-2">启动失败</h2>
+        <p class="text-slate-300 text-sm">浏览器无法直接加载 TypeScript 模块。<br>请尝试使用现代浏览器（Chrome/Edge/Safari）。</p>
+    </div>
+
+    <!-- 
+      使用 Babel 脚本块直接启动应用，避免直接引用 .tsx 文件时可能遇到的 MIME 类型限制问题。
+      注意：data-type="module" 允许 Babel 处理 import 语句。
+    -->
+    <script type="text/babel" data-presets="react,typescript" data-type="module">
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        import App from './App.tsx';
+
+        try {
+            const rootElement = document.getElementById('root');
+            if (rootElement) {
+                const root = ReactDOM.createRoot(rootElement);
+                root.render(
+                    <React.StrictMode>
+                        <App />
+                    </React.StrictMode>
+                );
+            }
+        } catch (err) {
+            console.error('App Error:', err);
+            document.getElementById('fallback-error').style.display = 'block';
+        }
+    </script>
+
+    <script>
+        // 如果 5 秒后 root 还是加载状态，可能发生了静默错误
+        setTimeout(() => {
+            const root = document.getElementById('root');
+            if (root && root.innerHTML.includes('正在启动')) {
+                console.warn('检测到加载缓慢或停滞，请检查控制台。');
+            }
+        }, 5000);
+    </script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
