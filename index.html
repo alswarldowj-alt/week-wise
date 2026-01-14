@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- 引入 Babel 用于浏览器端解析 TSX -->
+    <!-- 引入 Babel 用于浏览器端解析 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body {
@@ -19,27 +19,27 @@
             padding: 0;
             color: #f8fafc;
         }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
         .gradient-text {
             background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        #fallback-error {
+        #error-console {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(30, 41, 59, 0.9);
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 1px solid rgba(239, 68, 68, 0.5);
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #7f1d1d;
+            color: #fecaca;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 100;
+            border: 1px solid #dc2626;
+            max-height: 200px;
+            overflow-y: auto;
         }
     </style>
     <script type="importmap">
@@ -57,53 +57,74 @@
 </head>
 <body>
     <div id="root">
-        <!-- 初始加载状态 -->
         <div class="flex items-center justify-center min-h-screen">
             <div class="text-center">
                 <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="mt-4 text-slate-400">正在启动 WeekWise...</p>
+                <p class="mt-4 text-slate-400 font-medium">正在初始化计算器...</p>
+                <p id="loading-hint" class="mt-2 text-slate-600 text-xs italic">首次加载可能需要几秒钟时间</p>
             </div>
         </div>
     </div>
 
-    <div id="fallback-error">
-        <h2 class="text-red-400 font-bold mb-2">启动失败</h2>
-        <p class="text-slate-300 text-sm">浏览器无法直接加载 TypeScript 模块。<br>请尝试使用现代浏览器（Chrome/Edge/Safari）。</p>
+    <div id="error-console">
+        <strong>启动异常:</strong>
+        <div id="error-message" class="mt-1"></div>
+        <p class="mt-2 opacity-70">提示：请检查 GitHub Pages 路径设置或刷新重试。</p>
     </div>
 
     <!-- 
-      使用 Babel 脚本块直接启动应用，避免直接引用 .tsx 文件时可能遇到的 MIME 类型限制问题。
-      注意：data-type="module" 允许 Babel 处理 import 语句。
+      核心修复：直接使用 Babel 渲染 index.tsx。
+      Babel 内部会通过 fetch 获取源代码并转换，不会受服务器 MIME 类型的影响。
     -->
     <script type="text/babel" data-presets="react,typescript" data-type="module">
         import React from 'react';
         import ReactDOM from 'react-dom/client';
         import App from './App.tsx';
 
-        try {
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-                const root = ReactDOM.createRoot(rootElement);
-                root.render(
-                    <React.StrictMode>
-                        <App />
-                    </React.StrictMode>
-                );
+        const init = () => {
+            try {
+                const rootElement = document.getElementById('root');
+                if (rootElement) {
+                    const root = ReactDOM.createRoot(rootElement);
+                    root.render(
+                        <React.StrictMode>
+                            <App />
+                        </React.StrictMode>
+                    );
+                }
+            } catch (err) {
+                console.error('Render Error:', err);
+                showError(err.message);
             }
-        } catch (err) {
-            console.error('App Error:', err);
-            document.getElementById('fallback-error').style.display = 'block';
+        };
+
+        const showError = (msg) => {
+            document.getElementById('error-console').style.display = 'block';
+            document.getElementById('error-message').textContent = msg;
+        };
+
+        // 确保 DOM 加载后运行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
         }
+
+        // 捕获全局未处理错误
+        window.onerror = function(message) {
+            showError(message);
+        };
     </script>
 
     <script>
-        // 如果 5 秒后 root 还是加载状态，可能发生了静默错误
+        // 监控是否长时间未响应
         setTimeout(() => {
             const root = document.getElementById('root');
-            if (root && root.innerHTML.includes('正在启动')) {
-                console.warn('检测到加载缓慢或停滞，请检查控制台。');
+            if (root && root.innerHTML.includes('正在初始化')) {
+                document.getElementById('loading-hint').textContent = '响应较慢，正在尝试备选方案...';
+                console.warn('Boot timeout - browser might be blocking imports.');
             }
-        }, 5000);
+        }, 8000);
     </script>
 <script type="module" src="/index.tsx"></script>
 </body>
