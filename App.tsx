@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import WeekCard from './components/WeekCard';
-import { getISOWeekNumber, getTimezoneString } from './utils/dateUtils';
+import WeekCard from './components/WeekCard.tsx';
+import { getISOWeekNumber, getTimezoneString } from './utils/dateUtils.ts';
 
 const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -51,7 +51,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="space-y-8">
-          {/* 1. 当前时刻 (Moved to top as requested) */}
+          {/* 1. 当前时刻 */}
           <section>
             <WeekCard
               title="当前时刻"
@@ -62,7 +62,7 @@ const App: React.FC = () => {
             />
           </section>
 
-          {/* 2. 选择目标日期 (Input section moved to middle) */}
+          {/* 2. 选择目标日期 */}
           <section>
             <div className="glass-card rounded-3xl p-6 md:p-8 border border-white/10 shadow-xl">
               <div className="space-y-4">
@@ -90,7 +90,7 @@ const App: React.FC = () => {
             </div>
           </section>
 
-          {/* 3. 指定日期结果 (Result moved to bottom) */}
+          {/* 3. 指定日期结果 */}
           <section>
             <WeekCard
               title="指定日期"

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { formatDate, getDayName } from '../utils/dateUtils';
+import { formatDate, getDayName } from '../utils/dateUtils.ts';
 
 interface WeekCardProps {
   title: string;
