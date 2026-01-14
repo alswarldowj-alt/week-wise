@@ -9,37 +9,33 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- 引入 Babel 用于浏览器端解析 -->
+    <!-- 使用 Babel 实时解析 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            margin: 0;
-            padding: 0;
+            background-color: #020617;
             color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .gradient-text {
-            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        #error-console {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #7f1d1d;
-            color: #fecaca;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 100;
-            border: 1px solid #dc2626;
-            max-height: 200px;
-            overflow-y: auto;
+        .glow-blue {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+        /* 针对 Date Input 的样式优化 */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
     </style>
     <script type="importmap">
@@ -57,74 +53,20 @@
 </head>
 <body>
     <div id="root">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="text-center">
-                <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="mt-4 text-slate-400 font-medium">正在初始化计算器...</p>
-                <p id="loading-hint" class="mt-2 text-slate-600 text-xs italic">首次加载可能需要几秒钟时间</p>
-            </div>
+        <div class="flex flex-col items-center justify-center min-h-screen space-y-4">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-slate-400 font-medium animate-pulse">正在构建计算环境...</p>
         </div>
     </div>
 
-    <div id="error-console">
-        <strong>启动异常:</strong>
-        <div id="error-message" class="mt-1"></div>
-        <p class="mt-2 opacity-70">提示：请检查 GitHub Pages 路径设置或刷新重试。</p>
-    </div>
-
-    <!-- 
-      核心修复：直接使用 Babel 渲染 index.tsx。
-      Babel 内部会通过 fetch 获取源代码并转换，不会受服务器 MIME 类型的影响。
-    -->
+    <!-- Babel 入口 -->
     <script type="text/babel" data-presets="react,typescript" data-type="module">
         import React from 'react';
         import ReactDOM from 'react-dom/client';
         import App from './App.tsx';
 
-        const init = () => {
-            try {
-                const rootElement = document.getElementById('root');
-                if (rootElement) {
-                    const root = ReactDOM.createRoot(rootElement);
-                    root.render(
-                        <React.StrictMode>
-                            <App />
-                        </React.StrictMode>
-                    );
-                }
-            } catch (err) {
-                console.error('Render Error:', err);
-                showError(err.message);
-            }
-        };
-
-        const showError = (msg) => {
-            document.getElementById('error-console').style.display = 'block';
-            document.getElementById('error-message').textContent = msg;
-        };
-
-        // 确保 DOM 加载后运行
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-
-        // 捕获全局未处理错误
-        window.onerror = function(message) {
-            showError(message);
-        };
-    </script>
-
-    <script>
-        // 监控是否长时间未响应
-        setTimeout(() => {
-            const root = document.getElementById('root');
-            if (root && root.innerHTML.includes('正在初始化')) {
-                document.getElementById('loading-hint').textContent = '响应较慢，正在尝试备选方案...';
-                console.warn('Boot timeout - browser might be blocking imports.');
-            }
-        }, 8000);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 <script type="module" src="/index.tsx"></script>
 </body>

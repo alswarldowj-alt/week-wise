@@ -5,107 +5,94 @@ import { getISOWeekNumber, getTimezoneString } from './utils/dateUtils.ts';
 
 const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [targetDate, setTargetDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [detectedTimezone, setDetectedTimezone] = useState<string>('');
+  const [targetDateStr, setTargetDateStr] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [timezone, setTimezone] = useState<string>('');
 
   useEffect(() => {
-    // Update current date every minute to keep it fresh
-    const timer = setInterval(() => {
-      setCurrentDate(new Date());
-    }, 60000);
-
-    setDetectedTimezone(getTimezoneString());
-
+    setTimezone(getTimezoneString());
+    const timer = setInterval(() => setCurrentDate(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTargetDate(e.target.value);
+    setTargetDateStr(e.target.value);
   };
 
-  const parsedTargetDate = new Date(targetDate);
-  // Check if parsed date is valid
-  const isValidTarget = !isNaN(parsedTargetDate.getTime());
+  const targetDate = new Date(targetDateStr);
+  const isTargetValid = !isNaN(targetDate.getTime());
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-blue-500/30">
-      {/* Background patterns */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[120px]"></div>
+    <div className="min-h-screen relative py-12 px-4 md:px-8">
+      {/* 装饰性背景 */}
+      <div className="fixed inset-0 z-[-1]">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 py-12 md:py-24">
-        {/* Header Section */}
-        <header className="mb-12 text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-sm">
-            <span className="relative flex h-2 w-2 mr-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            <span className="text-xs font-medium tracking-wide uppercase text-slate-300">Week Number Calculator</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            精准日期周数<span className="gradient-text">计算器</span>
+      <div className="max-w-4xl mx-auto">
+        <header className="text-center mb-16">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
+            Week<span className="gradient-text">Wise</span>
           </h1>
+          <p className="text-slate-400 text-lg font-medium">
+            精准周数计算工具 · ISO-8601 标准
+          </p>
         </header>
 
-        <div className="space-y-8">
-          {/* 1. 当前时刻 */}
-          <section>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          {/* 左侧：输入与控制 */}
+          <div className="space-y-8">
+            <section className="glass rounded-3xl p-8 glow-blue">
+              <h2 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-6">设置目标日期</h2>
+              <div className="space-y-6">
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={targetDateStr}
+                    onChange={handleDateChange}
+                    className="w-full bg-slate-900/80 border border-slate-700 text-white text-2xl rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-slate-500">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  <span>正在使用时区: {timezone}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="glass rounded-3xl p-6 text-slate-400 text-sm leading-relaxed">
+              <h3 className="text-white font-semibold mb-2">关于 ISO-8601 标准</h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>每周从 <span className="text-blue-400">星期一</span> 开始</li>
+                <li>一年中的第 1 周是包含该年第一个星期四的那一周</li>
+                <li>广泛应用于财务、制造和物流领域</li>
+              </ul>
+            </section>
+          </div>
+
+          {/* 右侧：结果展示 */}
+          <div className="space-y-8">
             <WeekCard
-              title="当前时刻"
+              title="当前日期"
               date={currentDate}
               weekNumber={getISOWeekNumber(currentDate)}
               isCurrent={true}
-              timezone={detectedTimezone}
+              timezone={timezone}
             />
-          </section>
 
-          {/* 2. 选择目标日期 */}
-          <section>
-            <div className="glass-card rounded-3xl p-6 md:p-8 border border-white/10 shadow-xl">
-              <div className="space-y-4">
-                <label htmlFor="target-date" className="block text-sm font-semibold text-slate-300">
-                  选择目标日期
-                </label>
-                <div className="relative group">
-                  <input
-                    type="date"
-                    id="target-date"
-                    value={targetDate}
-                    onChange={handleDateChange}
-                    className="w-full bg-slate-900/50 border border-slate-700 text-white text-xl rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent block p-4 outline-none transition-all group-hover:border-slate-500"
-                  />
-                </div>
-                <div className="pt-2 border-t border-white/5">
-                  <div className="flex items-center text-slate-400 text-xs mb-1">
-                    <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>计算标准: ISO-8601 (周一为起始日)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. 指定日期结果 */}
-          <section>
             <WeekCard
-              title="指定日期"
-              date={isValidTarget ? parsedTargetDate : new Date()}
-              weekNumber={isValidTarget ? getISOWeekNumber(parsedTargetDate) : 0}
+              title="目标日期结果"
+              date={isTargetValid ? targetDate : new Date()}
+              weekNumber={isTargetValid ? getISOWeekNumber(targetDate) : 0}
               isCurrent={false}
             />
-          </section>
+          </div>
         </div>
 
-        {/* Footer info */}
-        <footer className="mt-16 pt-8 border-t border-white/5 text-center text-slate-500 text-xs">
-          <p>© {new Date().getFullYear()} WeekWise — 高级前端周数分析工具</p>
+        <footer className="mt-20 text-center text-slate-600 text-sm">
+          <p>© {new Date().getFullYear()} WeekWise — 精准掌控每一周</p>
         </footer>
-      </main>
+      </div>
     </div>
   );
 };
