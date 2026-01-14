@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- 使用 Babel 实时解析 -->
+    <!-- Babel 运行时 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body {
@@ -32,7 +32,6 @@
         .glow-blue {
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
         }
-        /* 针对 Date Input 的样式优化 */
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
@@ -55,19 +54,15 @@
     <div id="root">
         <div class="flex flex-col items-center justify-center min-h-screen space-y-4">
             <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-slate-400 font-medium animate-pulse">正在构建计算环境...</p>
+            <p class="text-slate-400 font-medium animate-pulse">正在激活 WeekWise 系统...</p>
         </div>
     </div>
 
-    <!-- Babel 入口 -->
-    <script type="text/babel" data-presets="react,typescript" data-type="module">
-        import React from 'react';
-        import ReactDOM from 'react-dom/client';
-        import App from './App.tsx';
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    <!-- 
+      核心修复：不再使用 inline import，而是通过 src 加载 index.tsx。
+      Babel 会处理文件获取和转译，不受服务器 MIME 类型影响。
+    -->
+    <script src="index.tsx" type="text/babel" data-presets="react,typescript"></script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
